@@ -27,6 +27,8 @@ Para cortar, volvé a la Terminal y apretá `Ctrl + C`.
 
 ## 2. Subirlo a GitHub y activar GitHub Pages
 
+> ✅ **Ya está hecho.** El repo es https://github.com/DonElectron2000/oficina-buddy y Pages publica desde la rama `gh-pages`. Esta sección queda como referencia por si algún día hay que armarlo de cero.
+
 GitHub Pages gratis solo funciona con repositorios **públicos**. Cualquiera con el link puede ver el dibujo del mapa, pero no lo que pasa ni lo que se habla en la oficina.
 
 **a) Crear el repositorio y subir los archivos** (una sola vez). Con la app `gh` ya logueada en tu cuenta:
@@ -49,16 +51,16 @@ No subas los archivos arrastrándolos a la web de GitHub: la Mac esconde las car
 
 ## 3. El link final y cómo ponerlo en WorkAdventure
 
-El link del mapa va a ser:
+El link del mapa es:
 
 ```
-https://TU-USUARIO.github.io/oficina-buddy/oficina.tmj
+https://donelectron2000.github.io/oficina-buddy/oficina.tmj
 ```
 
-(Cambiá `TU-USUARIO` por tu usuario de GitHub). Si lo abrís en el navegador y ves un montón de texto, está funcionando.
+Si lo abrís en el navegador y ves un montón de texto, está funcionando.
 
-**Probarlo antes de tocar tu mundo:**
-`https://play.workadventu.re/_/global/TU-USUARIO.github.io/oficina-buddy/oficina.tmj`
+**Probarlo antes de tocar tu mundo** (es una sala pública de prueba, no la de tu equipo):
+https://play.workadventu.re/_/global/donelectron2000.github.io/oficina-buddy/oficina.tmj
 
 **Ponerlo en tu mundo:** entrá a **admin.workadventu.re**, abrí tu mundo y la sala que hoy usa la plantilla. En su configuración buscá el campo de la **URL del mapa** (puede decir "Map URL"), pegá el link `.tmj` de arriba y guardá. Los nombres de los menús a veces cambian: si no lo encontrás, buscá dónde figura la URL de la plantilla actual y reemplazala.
 
