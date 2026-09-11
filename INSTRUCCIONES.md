@@ -62,7 +62,14 @@ Si lo abrís en el navegador y ves un montón de texto, está funcionando.
 **Probarlo antes de tocar tu mundo** (es una sala pública de prueba, no la de tu equipo):
 https://play.workadventu.re/_/global/donelectron2000.github.io/oficina-buddy/oficina.tmj
 
-**Ponerlo en tu mundo:** entrá a **admin.workadventu.re**, abrí tu mundo y la sala que hoy usa la plantilla. En su configuración buscá el campo de la **URL del mapa** (puede decir "Map URL"), pegá el link `.tmj` de arriba y guardá. Los nombres de los menús a veces cambian: si no lo encontrás, buscá dónde figura la URL de la plantilla actual y reemplazala.
+> ✅ **Ya está conectado.** En admin.workadventu.re, el mundo "Oficinas Buddy" tiene la sala **Oficina Buddy** con este mapa, marcada como sala por defecto. Link para el equipo:
+> **https://play.workadventu.re/@/tienda-buddy/oficinas-buddy/oficina-buddy**
+>
+> La sala vieja "Small office" quedó de respaldo. Si no la querés, borrala desde el admin con "Edit Room" → "Delete".
+
+**Cómo se hizo (por si hay que repetirlo):** en admin.workadventu.re → tu mundo → **Create New Room** → pestaña **Custom** → pegar el link `.tmj` → **Select your custom map** → **Save**. Después, **Edit Room** → **Set as default**. Aparece un aviso de "unknown property name" en "Chunk 1": son los créditos de los tiles y se puede ignorar.
+
+**Ponerlo en tu mundo (forma general):** entrá a **admin.workadventu.re**, abrí tu mundo y la sala que hoy usa la plantilla. En su configuración buscá el campo de la **URL del mapa** (puede decir "Map URL"), pegá el link `.tmj` de arriba y guardá. Los nombres de los menús a veces cambian: si no lo encontrás, buscá dónde figura la URL de la plantilla actual y reemplazala.
 
 ---
 
