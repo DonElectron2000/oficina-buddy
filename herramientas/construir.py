@@ -3,8 +3,8 @@
 Oficina Buddy — generador del mapa de WorkAdventure.
 
 Este script arma todo lo propio de la oficina:
-  - tilesets/buddy_ambiente.png  paredes, pisos, alfombras y objetos dibujados a mano
-  - tilesets/buddy_carteles.png  nombres de los escritorios, carteles y pantallas
+  - tilesets/buddy_ambiente.png  paredes, pisos, alfombras, muebles y objetos dibujados a mano
+  - tilesets/buddy_carteles.png  placas con nombres, carteles y pantallas
   - tilesets/buddy_logo.png      logo de Buddy para la recepción
   - tilesets/buddy_cuadro.png    cuadro con la foto de los bolsos
   - oficina.tmj                  el mapa
@@ -19,7 +19,6 @@ lo pisaría con lo que dice acá.
 """
 
 import json
-import math
 import os
 import random
 import sys
@@ -30,7 +29,7 @@ from PIL import Image, ImageDraw, ImageFont
 #  CONFIGURACIÓN
 # ════════════════════════════════════════════════════════════════════
 
-# Nombre que aparece en el cartel de cada escritorio.
+# Nombre que aparece en la placa de cada escritorio.
 # Cambiá solo lo que está a la derecha de los dos puntos.
 NOMBRES = {
     "lucho": "Lucho",
@@ -69,7 +68,7 @@ T = 32
 W, H = 32, 25  # tamaño del mapa en tiles
 
 # Huecos de pared donde puede ir una pantalla (esquina superior izquierda, 3x2 tiles).
-LUGARES_PANTALLA = {"recepcion": (9, 18), "reuniones": (10, 1), "estudio": (5, 1)}
+LUGARES_PANTALLA = {"recepcion": (17, 18), "reuniones": (10, 1), "estudio": (1, 1)}
 
 
 def c(h, a=255):
@@ -81,6 +80,7 @@ def tono(col, f):
     return tuple(max(0, min(255, int(v * f))) for v in col[:3]) + (col[3],)
 
 
+# Paleta de la marca
 VERDE = c("#173A37")
 SALVIA = c("#5F7E7A")
 MEDIO = c("#485955")
@@ -88,7 +88,11 @@ CREMA = c("#F3F0E3")
 BEIGE = c("#D2C2B5")
 MADERA = c("#7F6D5F")
 MADERA_OSC = c("#564C43")
-SOMBRA = (0, 0, 0, 55)
+# Derivados
+SUPERFICIE = tono(MADERA, 1.12)  # tapa de escritorios: la misma madera, un toque más clara
+ROSA = c("#E7B2A6")
+NEGRO = c("#262626")
+SOMBRA = (0, 0, 0, 50)
 NADA = (0, 0, 0, 0)
 
 
@@ -145,89 +149,91 @@ class Hoja:
             hoja.alpha_composite(img, (x * T, y * T))
             self.ids[nombre] = [[(y + r) * self.cols + (x + k) for k in range(w)] for r in range(h)]
         hoja.save(os.path.join(TILESETS, self.archivo))
-        self.tamano = hoja.size
         return self
 
 
 # ─── Dibujos: paredes y pisos ───
 
 def tapa_pared(n, e, s, o):
-    im, d = lienzo(1, 1, VERDE)
+    """Parte de arriba de la pared, en verde salvia con borde verde oscuro."""
+    im, d = lienzo(1, 1, SALVIA)
     rnd = random.Random(7)
-    for _ in range(18):
-        d.point((rnd.randrange(T), rnd.randrange(T)), tono(VERDE, 1.15))
-    borde = tono(VERDE, 0.55)
+    for _ in range(16):
+        d.point((rnd.randrange(T), rnd.randrange(T)), tono(SALVIA, 1.06))
     if not n:
-        d.line([0, 2, T - 1, 2], fill=MEDIO)
-        d.rectangle([0, 0, T - 1, 1], fill=borde)
+        d.line([0, 3, T - 1, 3], fill=tono(SALVIA, 1.18))
+        d.rectangle([0, 0, T - 1, 2], fill=VERDE)
     if not s:
-        d.rectangle([0, T - 2, T - 1, T - 1], fill=borde)
+        d.rectangle([0, T - 3, T - 1, T - 1], fill=VERDE)
     if not o:
-        d.rectangle([0, 0, 1, T - 1], fill=borde)
+        d.rectangle([0, 0, 2, T - 1], fill=VERDE)
     if not e:
-        d.rectangle([T - 2, 0, T - 1, T - 1], fill=borde)
+        d.rectangle([T - 3, 0, T - 1, T - 1], fill=VERDE)
     return im
 
 
-def cara_pared(base, sombra, zocalo):
-    im, d = lienzo(1, 1, base)
+def cara_pared(sombra, zocalo, jamba_izq=False, jamba_der=False):
+    """Frente de la pared: verde salvia, zócalo verde oscuro y marco de puerta si corresponde."""
+    im, d = lienzo(1, 1, SALVIA)
     rnd = random.Random(3)
-    for _ in range(14):
-        d.point((rnd.randrange(T), rnd.randrange(T)), tono(base, 1.07))
+    for _ in range(12):
+        d.point((rnd.randrange(T), rnd.randrange(T)), tono(SALVIA, 1.05))
     if sombra:
-        d.rectangle([0, 0, T - 1, 2], fill=tono(base, 0.7))
-        d.line([0, 3, T - 1, 3], fill=tono(base, 0.86))
+        d.rectangle([0, 0, T - 1, 2], fill=tono(SALVIA, 0.78))
+        d.line([0, 3, T - 1, 3], fill=tono(SALVIA, 0.9))
     if zocalo:
-        d.line([0, 8, T - 1, 8], fill=tono(base, 1.18))
-        d.line([0, 9, T - 1, 9], fill=tono(base, 0.8))
+        d.line([0, 9, T - 1, 9], fill=tono(SALVIA, 1.15))
+        d.line([0, 10, T - 1, 10], fill=tono(SALVIA, 0.86))
         for x in (0, 16):
-            d.line([x, 10, x, 25], fill=tono(base, 0.88))
-        d.rectangle([0, 26, T - 1, T - 1], fill=MADERA_OSC)
-        d.line([0, 26, T - 1, 26], fill=tono(MADERA_OSC, 1.35))
+            d.line([x, 11, x, 24], fill=tono(SALVIA, 0.93))
+        d.rectangle([0, 25, T - 1, T - 1], fill=VERDE)
+        d.line([0, 25, T - 1, 25], fill=MEDIO)
+    if jamba_izq:
+        d.rectangle([0, 0, 3, T - 1], fill=VERDE)
+        d.line([4, 0, 4, T - 1], fill=tono(SALVIA, 0.85))
+    if jamba_der:
+        d.rectangle([T - 4, 0, T - 1, T - 1], fill=VERDE)
+        d.line([T - 5, 0, T - 5, T - 1], fill=tono(SALVIA, 0.85))
     return im
 
 
 def piso_madera(variante):
     im, d = lienzo(1, 1)
-    tonos = [c("#8B796A"), c("#85725F"), c("#897664"), c("#827060")]
+    tonos = [tono(MADERA, 1.04), MADERA, tono(MADERA, 1.02), tono(MADERA, 0.98)]
     juntas = [[21], [7], [27], [14]] if variante == 0 else [[3], [24], [12], [30]]
     for i in range(4):
         y0, col = i * 8, tonos[i]
         d.rectangle([0, y0, T - 1, y0 + 7], fill=col)
         rnd = random.Random(100 + variante * 10 + i)
-        for _ in range(7):
+        for _ in range(6):
             x, y = rnd.randrange(T), y0 + rnd.randrange(2, 7)
-            d.line([x, y, min(T - 1, x + rnd.randrange(3, 8)), y], fill=tono(col, 0.95))
-        d.line([0, y0, T - 1, y0], fill=tono(col, 1.05))
-        d.line([0, y0 + 7, T - 1, y0 + 7], fill=tono(col, 0.86))
+            d.line([x, y, min(T - 1, x + rnd.randrange(3, 9)), y], fill=tono(col, 0.95))
+        d.line([0, y0, T - 1, y0], fill=tono(col, 1.04))
+        d.line([0, y0 + 7, T - 1, y0 + 7], fill=tono(col, 0.91))
         for jx in juntas[i]:
-            d.line([jx, y0 + 1, jx, y0 + 6], fill=tono(col, 0.86))
+            d.line([jx, y0 + 1, jx, y0 + 6], fill=tono(col, 0.91))
     return im
 
 
 def piso_crema():
     im, d = lienzo(1, 1, CREMA)
-    alt = c("#EDE7D7")
-    d.rectangle([16, 0, 31, 15], fill=alt)
-    d.rectangle([0, 16, 15, 31], fill=alt)
-    junta = c("#DDD2C4")
-    for v in (0, 16):
-        d.line([0, v, T - 1, v], fill=junta)
-        d.line([v, 0, v, T - 1], fill=junta)
+    junta = c("#E6DFCE")
+    d.line([0, 0, T - 1, 0], fill=junta)
+    d.line([0, 0, 0, T - 1], fill=junta)
     return im
 
 
 def piso_deck():
     im, d = lienzo(1, 1)
-    tonos = [c("#5B5046"), c("#564C43"), c("#5F544A"), c("#52483F")]
+    tonos = [tono(MADERA, 1.03), MADERA, tono(MADERA, 1.06), tono(MADERA, 0.97)]
     for i in range(4):
         y0, col = i * 8, tonos[i]
         d.rectangle([0, y0, T - 1, y0 + 7], fill=col)
-        d.line([0, y0, T - 1, y0], fill=tono(col, 1.12))
-        d.line([0, y0 + 7, T - 1, y0 + 7], fill=c("#3A322C"))
-        d.line([0, y0, 0, y0 + 6], fill=c("#3A322C"))
-        for x in (3, 28):
-            d.point((x, y0 + 3), fill=c("#3A322C"))
+        d.line([0, y0, T - 1, y0], fill=tono(col, 1.08))
+        d.line([0, y0 + 7, T - 1, y0 + 7], fill=MADERA_OSC)
+        d.line([0, y0, 0, y0 + 6], fill=MADERA_OSC)
+        for x in (4, 27):
+            d.point((x, y0 + 3), fill=MADERA_OSC)
     return im
 
 
@@ -235,35 +241,93 @@ def alfombra():
     """Alfombra beige de 3x3 tiles: esquinas, bordes y centro repetible."""
     im, d = lienzo(3, 3)
     d.rectangle([3, 1, 92, 94], fill=BEIGE)
-    d.rectangle([3, 1, 92, 94], outline=tono(BEIGE, 0.86), width=3)
+    d.rectangle([3, 1, 92, 94], outline=tono(BEIGE, 0.9), width=3)
     d.rectangle([8, 6, 87, 89], outline=CREMA)
     for ty in range(3):
         for tx in range(3):
             cx, cy = tx * T + 16, ty * T + 16
-            d.polygon([(cx, cy - 5), (cx + 5, cy), (cx, cy + 5), (cx - 5, cy)], fill=tono(BEIGE, 0.9))
-            d.point((cx, cy), fill=CREMA)
+            for dx, dy in ((0, 0), (-3, 0), (3, 0), (0, -3), (0, 3)):
+                d.point((cx + dx, cy + dy), fill=tono(BEIGE, 0.94))
     for y in range(3, 94, 3):
         d.line([0, y, 2, y], fill=CREMA)
         d.line([93, y, 95, y], fill=CREMA)
     return im
 
 
-# ─── Dibujos: objetos ───
+# ─── Dibujos: muebles ───
 
-def felpudo():
-    im, d = lienzo(2, 1)
-    d.rounded_rectangle([3, 5, 60, 27], radius=3, fill=VERDE)
-    d.rounded_rectangle([6, 8, 57, 24], radius=2, outline=MEDIO)
-    texto_centrado(d, 31.5, 16, "HOLA", CREMA, 12, 44)
+def escritorio_tile(fila, pos):
+    """Pedazo de escritorio. fila: 'sup' (tapa) o 'fre' (frente). pos: 'i', 'm' o 'd'."""
+    im, d = lienzo(1, 1)
+    x0 = 2 if pos == "i" else 0
+    x1 = T - 3 if pos == "d" else T - 1
+    rnd = random.Random({"i": 1, "m": 2, "d": 3}[pos])
+    if fila == "sup":
+        d.rectangle([x0, 2, x1, T - 1], fill=SUPERFICIE)
+        d.line([x0, 2, x1, 2], fill=MADERA_OSC)
+        d.line([x0, 3, x1, 3], fill=tono(SUPERFICIE, 1.1))
+        for _ in range(5):
+            x, y = rnd.randrange(x0, x1), rnd.randrange(6, T - 2)
+            d.line([x, y, min(x1, x + rnd.randrange(4, 10)), y], fill=tono(SUPERFICIE, 0.95))
+        if pos == "i":
+            d.line([x0, 2, x0, T - 1], fill=MADERA_OSC)
+        if pos == "d":
+            d.line([x1, 2, x1, T - 1], fill=MADERA_OSC)
+    else:
+        d.rectangle([x0, 0, x1, 8], fill=SUPERFICIE)
+        d.line([x0, 8, x1, 8], fill=tono(SUPERFICIE, 1.15))
+        d.rectangle([x0, 9, x1, 24], fill=MADERA_OSC)
+        d.line([x0, 24, x1, 24], fill=tono(MADERA_OSC, 0.8))
+        sx0 = x0 + (4 if pos == "i" else 0)
+        sx1 = x1 - (4 if pos == "d" else 0)
+        d.rectangle([sx0, 25, sx1, 28], fill=SOMBRA)
+        if pos == "i":
+            d.line([x0, 0, x0, 24], fill=MADERA_OSC)
+            d.rectangle([x0, 25, x0 + 3, 30], fill=MADERA_OSC)
+        if pos == "d":
+            d.line([x1, 0, x1, 24], fill=MADERA_OSC)
+            d.rectangle([x1 - 3, 25, x1, 30], fill=MADERA_OSC)
+    return im
+
+
+def silla(mira, solo_respaldo=False):
+    """Silla vista desde arriba. mira: hacia dónde queda mirando quien se sienta."""
+    im, d = lienzo(1, 1)
+    asiento, resp_col, borde = VERDE, tono(VERDE, 1.3), tono(VERDE, 0.7)
+    formas = {
+        "arriba": ((8, 5, 23, 20), (6, 19, 25, 26)),
+        "abajo": ((8, 11, 23, 26), (6, 4, 25, 11)),
+        "izq": ((5, 8, 20, 23), (19, 6, 26, 25)),
+        "der": ((11, 8, 26, 23), (5, 6, 12, 25)),
+    }
+    seat, resp = formas[mira]
+
+    def dibujar_asiento():
+        d.ellipse([8, 26, 23, 30], fill=SOMBRA)
+        d.rounded_rectangle(seat, radius=4, fill=asiento, outline=borde)
+        d.line([seat[0] + 3, seat[1] + 2, seat[2] - 3, seat[1] + 2], fill=MEDIO)
+
+    def dibujar_respaldo():
+        d.rounded_rectangle(resp, radius=3, fill=resp_col, outline=borde)
+
+    if solo_respaldo:
+        dibujar_respaldo()
+    elif mira == "abajo":
+        dibujar_respaldo()
+        dibujar_asiento()
+    else:
+        dibujar_asiento()
+        dibujar_respaldo()
     return im
 
 
 def puerta_entrada():
-    im, d = lienzo(2, 1, tono(VERDE, 0.8))
-    d.rectangle([0, 6, 63, 25], fill=MADERA_OSC)
-    d.rectangle([3, 9, 60, 22], fill=c("#BFD6D1"))
-    d.line([31, 9, 32, 22], fill=MADERA_OSC, width=2)
-    for x0 in (6, 38):
+    im, d = lienzo(2, 1, SALVIA)
+    d.rectangle([0, 0, 63, 31], outline=VERDE, width=3)
+    d.rectangle([0, 6, 63, 25], fill=VERDE)
+    d.rectangle([4, 9, 59, 22], fill=c("#BFD6D1"))
+    d.line([31, 9, 32, 22], fill=VERDE, width=2)
+    for x0 in (7, 39):
         d.line([x0, 20, x0 + 8, 11], fill=(255, 255, 255, 140))
     d.point((28, 15), fill=CREMA)
     d.point((35, 15), fill=CREMA)
@@ -297,6 +361,37 @@ def luz_estudio():
     return im
 
 
+def lampara():
+    """Lámpara de pie con luz cálida."""
+    im, d = lienzo(1, 2)
+    brillo = Image.new("RGBA", im.size, NADA)
+    ImageDraw.Draw(brillo).ellipse([0, 0, 31, 34], fill=(255, 214, 150, 60))
+    im.alpha_composite(brillo)
+    d.ellipse([8, 58, 24, 63], fill=SOMBRA)
+    d.ellipse([10, 56, 22, 61], fill=MADERA_OSC)
+    d.line([16, 20, 16, 58], fill=MADERA_OSC, width=2)
+    d.polygon([(9, 6), (23, 6), (27, 20), (5, 20)], fill=CREMA, outline=tono(CREMA, 0.8))
+    d.line([6, 19, 26, 19], fill=(255, 214, 150, 255))
+    return im
+
+
+def fondo_croma():
+    """Fondo verde de grabación con su estructura, 3x3 tiles."""
+    im, d = lienzo(3, 3)
+    croma = c("#2FA84F")
+    fierro = c("#2B2B2B")
+    d.rectangle([6, 88, 90, 93], fill=SOMBRA)
+    for x in (4, 91):
+        d.line([x, 2, x, 90], fill=fierro, width=3)
+        d.line([x - 5, 91, x + 5, 91], fill=fierro, width=2)
+    d.line([4, 3, 91, 3], fill=fierro, width=3)
+    d.rectangle([8, 5, 87, 76], fill=croma)
+    for x in range(14, 87, 12):
+        d.line([x, 5, x, 76], fill=tono(croma, 0.9))
+    d.polygon([(8, 76), (87, 76), (90, 88), (5, 88)], fill=tono(croma, 1.08))
+    return im
+
+
 def bolso(d, x, y, w, h, cuerpo, asa, brillo, logo=None):
     arriba = y + int(h * 0.4)
     d.arc([x + w * 0.24, y, x + w * 0.76, y + (arriba - y) * 2], 180, 360, fill=asa, width=2)
@@ -308,126 +403,126 @@ def bolso(d, x, y, w, h, cuerpo, asa, brillo, logo=None):
         d.rectangle([x + w // 2 - 3, arriba + 6, x + w // 2 + 2, arriba + 7], fill=logo)
 
 
+def cartera(d, x, y, w, h, cuerpo, asa, brillo):
+    """Cartera tipo tote, más alta que un bolso."""
+    arriba = y + int(h * 0.35)
+    d.arc([x + 4, y, x + w - 5, y + (arriba - y) * 2 + 2], 180, 360, fill=asa, width=2)
+    d.polygon([(x, arriba), (x + w - 1, arriba), (x + w - 3, y + h - 1), (x + 2, y + h - 1)], fill=cuerpo)
+    d.line([x + 3, arriba + 2, x + 3, y + h - 3], fill=brillo)
+    d.line([x + 1, arriba, x + w - 2, arriba], fill=tono(cuerpo, 0.8))
+    d.rectangle([x + w // 2 - 4, arriba + 6, x + w // 2 + 3, arriba + 7], fill=c("#1E1E1E"))
+
+
 def estante_bolsos():
+    """Estante de pared con los productos, 3x2 tiles."""
     im, d = lienzo(3, 2)
-    d.rectangle([4, 60, 95, 63], fill=SOMBRA)
-    d.rectangle([2, 4, 93, 61], fill=MADERA_OSC)
-    d.rectangle([5, 8, 90, 31], fill=tono(MADERA, 0.78))
-    d.rectangle([5, 36, 90, 57], fill=tono(MADERA, 0.78))
-    for y in (4, 32, 58):
-        d.rectangle([2, y, 93, y + 3], fill=MADERA)
-        d.line([2, y, 93, y], fill=tono(MADERA, 1.2))
-    rosa, negro, verde = c("#E7B2A6"), c("#262626"), VERDE
-    fila1 = [(rosa, c("#1E1E1E"), c("#F7D9D0"), c("#1E1E1E")), (negro, c("#111111"), c("#4B4B4B"), c("#3A3A3A")),
-             (verde, c("#0E2624"), c("#2F5A55"), CREMA)]
-    fila2 = [(BEIGE, c("#564C43"), c("#E6DAD0"), VERDE), (SALVIA, c("#2E403D"), c("#86A29E"), CREMA),
-             (rosa, c("#1E1E1E"), c("#F7D9D0"), c("#1E1E1E"))]
-    for i, (cu, asa, br, lg) in enumerate(fila1):
-        bolso(d, 7 + i * 28, 10, 25, 21, cu, asa, br, lg)
-    for i, (cu, asa, br, lg) in enumerate(fila2):
-        bolso(d, 7 + i * 28, 38, 25, 20, cu, asa, br, lg)
+    tabla = SUPERFICIE
+    for y in (27, 52):
+        d.rectangle([4, y + 4, 93, y + 6], fill=(0, 0, 0, 40))
+        d.rectangle([2, y, 93, y + 3], fill=tabla)
+        d.line([2, y + 3, 93, y + 3], fill=MADERA_OSC)
+        for x in (10, 82):
+            d.polygon([(x, y + 4), (x + 5, y + 4), (x, y + 10)], fill=MADERA_OSC)
+    rosa_asa, rosa_brillo = c("#1E1E1E"), c("#F7D9D0")
+    cartera(d, 6, 2, 26, 25, ROSA, rosa_asa, rosa_brillo)
+    bolso(d, 36, 7, 26, 20, NEGRO, c("#111111"), c("#4B4B4B"), c("#3A3A3A"))
+    bolso(d, 66, 7, 24, 20, VERDE, c("#0E2624"), c("#2F5A55"), CREMA)
+    bolso(d, 7, 33, 24, 19, BEIGE, MADERA_OSC, c("#E6DAD0"), VERDE)
+    bolso(d, 36, 33, 24, 19, SALVIA, c("#2E403D"), c("#86A29E"), CREMA)
+    cartera(d, 65, 30, 24, 22, ROSA, rosa_asa, rosa_brillo)
     return im
 
 
-def brasero():
-    im, d = lienzo(2, 2)
-    brillo = Image.new("RGBA", im.size, NADA)
-    ImageDraw.Draw(brillo).ellipse([0, 20, 63, 63], fill=(255, 150, 60, 50))
-    im.alpha_composite(brillo)
-    d.ellipse([10, 32, 53, 57], fill=c("#6E6A64"))
-    for k in range(12):
-        a = 2 * math.pi * k / 12
-        sx, sy = 31.5 + 19 * math.cos(a), 44.5 + 10.5 * math.sin(a)
-        d.ellipse([sx - 4, sy - 3, sx + 4, sy + 3], fill=c("#9A958D"), outline=c("#5E5A55"))
-    d.ellipse([17, 37, 46, 52], fill=c("#2E2622"))
-    d.line([21, 48, 42, 40], fill=c("#6B4A33"), width=3)
-    d.line([21, 40, 42, 48], fill=c("#5A3D2A"), width=3)
-    d.polygon([(22, 46), (25, 28), (29, 36), (32, 14), (35, 34), (38, 25), (42, 46)], fill=(242, 132, 40, 255))
-    d.polygon([(25, 46), (29, 32), (32, 23), (35, 34), (39, 46)], fill=(255, 196, 70, 255))
-    d.polygon([(29, 46), (32, 34), (35, 46)], fill=(255, 240, 170, 255))
-    for px, py in ((24, 22), (40, 18), (30, 9)):
-        d.point((px, py), fill=(255, 200, 90, 255))
+def exhibidor():
+    """Pedestal crema con una cartera rosa arriba, 2x1 tiles."""
+    im, d = lienzo(2, 1)
+    d.rectangle([8, 28, 58, 31], fill=SOMBRA)
+    d.rectangle([6, 15, 57, 18], fill=CREMA)
+    d.rectangle([6, 19, 57, 29], fill=tono(CREMA, 0.9))
+    d.rectangle([6, 15, 57, 29], outline=tono(CREMA, 0.72))
+    cartera(d, 20, 0, 24, 16, ROSA, c("#1E1E1E"), c("#F7D9D0"))
     return im
 
 
 # ─── Dibujos: carteles, pantallas, logo y cuadro ───
 
-def placa_nombre(nombre):
+def placa_escritorio(nombre):
+    """Placa verde oscuro con el nombre, va pegada al frente del escritorio."""
     im, d = lienzo(2, 1)
-    cuerda = c("#3B3B3B")
-    d.line([32, 1, 14, 7], fill=cuerda)
-    d.line([32, 1, 50, 7], fill=cuerda)
-    d.point((32, 1), fill=MADERA_OSC)
-    d.rounded_rectangle([6, 8, 61, 26], radius=3, fill=SOMBRA)
-    d.rounded_rectangle([4, 6, 59, 24], radius=3, fill=CREMA, outline=VERDE)
-    texto_centrado(d, 31.5, 15.5, nombre, VERDE, 14, 48)
+    d.rounded_rectangle([7, 11, 56, 23], radius=2, fill=VERDE)
+    d.rounded_rectangle([8, 12, 55, 22], radius=1, outline=MEDIO)
+    texto_centrado(d, 31.5, 17, nombre, CREMA, 10, 44)
     return im
 
 
-def cartel(lineas, alto=1):
-    im, d = lienzo(3, alto)
-    if alto == 1:
-        d.rounded_rectangle([5, 6, 94, 26], radius=2, fill=SOMBRA)
-        d.rounded_rectangle([3, 4, 92, 24], radius=2, fill=VERDE)
-        d.rounded_rectangle([5, 6, 90, 22], radius=1, outline=CREMA)
-        texto_centrado(d, 47.5, 14, lineas[0], CREMA, 12, 78)
-    else:
-        d.rounded_rectangle([5, 8, 94, 54], radius=3, fill=SOMBRA)
-        d.rounded_rectangle([3, 6, 92, 52], radius=3, fill=VERDE)
-        d.rounded_rectangle([6, 9, 89, 49], radius=2, outline=CREMA)
-        paso = 38 / (len(lineas) + 1)
-        for i, linea in enumerate(lineas):
-            texto_centrado(d, 47.5, 10 + paso * (i + 1), linea, CREMA, 13, 76)
+def cartel_puerta(texto):
+    """Cartelito de sala, al lado de la puerta, 2x1 tiles."""
+    im, d = lienzo(2, 1)
+    d.rounded_rectangle([4, 6, 62, 22], radius=2, fill=SOMBRA)
+    d.rounded_rectangle([2, 4, 60, 20], radius=2, fill=VERDE)
+    d.rounded_rectangle([4, 6, 58, 18], radius=1, outline=CREMA)
+    texto_centrado(d, 31, 12, texto, CREMA, 10, 48)
+    return im
+
+
+def cartel_grande(lineas):
+    """Cartel de 3x2 tiles. lineas: lista de (texto, tamaño)."""
+    im, d = lienzo(3, 2)
+    d.rounded_rectangle([5, 8, 94, 52], radius=3, fill=SOMBRA)
+    d.rounded_rectangle([3, 6, 92, 50], radius=3, fill=VERDE)
+    d.rounded_rectangle([6, 9, 89, 47], radius=2, outline=CREMA)
+    paso = 36 / (len(lineas) + 1)
+    for i, (linea, tam) in enumerate(lineas):
+        texto_centrado(d, 47.5, 10 + paso * (i + 1), linea, CREMA, tam, 76)
     return im
 
 
 def pantalla_link(texto, con_bolso):
     im, d = lienzo(3, 2)
-    d.rectangle([6, 9, 94, 58], fill=SOMBRA)
-    d.rounded_rectangle([3, 5, 92, 55], radius=3, fill=c("#1B1D1D"))
-    d.rectangle([6, 8, 89, 51], fill=VERDE)
+    d.rectangle([6, 9, 94, 56], fill=SOMBRA)
+    d.rounded_rectangle([3, 5, 92, 53], radius=3, fill=c("#1B1D1D"))
+    d.rectangle([6, 8, 89, 50], fill=VERDE)
     if con_bolso:
-        bolso(d, 37, 13, 21, 17, c("#E7B2A6"), c("#1E1E1E"), c("#F7D9D0"), c("#1E1E1E"))
-        texto_centrado(d, 47.5, 41, texto, CREMA, 12, 78)
+        bolso(d, 37, 12, 21, 17, ROSA, c("#1E1E1E"), c("#F7D9D0"), c("#1E1E1E"))
+        texto_centrado(d, 47.5, 40, texto, CREMA, 12, 78)
     else:
         texto_centrado(d, 47.5, 29, texto, CREMA, 15, 78)
-    # flechita de "abre un link"
-    d.line([81, 47, 86, 42], fill=CREMA)
-    d.line([83, 42, 86, 42], fill=CREMA)
-    d.line([86, 42, 86, 45], fill=CREMA)
-    d.point((47, 53), fill=(120, 220, 140, 255))
+    d.line([81, 46, 86, 41], fill=CREMA)
+    d.line([83, 41, 86, 41], fill=CREMA)
+    d.line([86, 41, 86, 44], fill=CREMA)
+    d.point((47, 51), fill=(120, 220, 140, 255))
     return im
 
 
 def logo_recepcion():
-    """192x64: pared verde oscuro con el logo en crema, igual a la pared de recepción."""
+    """192x64: panel verde oscuro con el logo en crema, colgado sobre la pared salvia."""
     im = Image.new("RGBA", (6 * T, 2 * T), NADA)
-    alta, baja = cara_pared(VERDE, True, False), cara_pared(VERDE, False, True)
-    for i in range(6):
-        im.alpha_composite(alta, (i * T, 0))
-        im.alpha_composite(baja, (i * T, T))
+    d = ImageDraw.Draw(im)
+    d.rounded_rectangle([5, 6, 191, 56], radius=3, fill=SOMBRA)
+    d.rounded_rectangle([2, 3, 189, 54], radius=3, fill=VERDE)
+    d.rounded_rectangle([5, 6, 186, 51], radius=2, outline=MEDIO)
     src = Image.open(os.path.join(ORIGINALES, "BUDDY_isologo_bn.jpg")).convert("L")
     mascara = src.point(lambda v: 255 - v)
     mascara = mascara.crop(mascara.point(lambda v: 255 if v > 60 else 0).getbbox())
-    escala = min(170 / mascara.width, 48 / mascara.height)
+    escala = min(166 / mascara.width, 38 / mascara.height)
     tam = (round(mascara.width * escala), round(mascara.height * escala))
     mascara = mascara.resize(tam, Image.LANCZOS).point(lambda v: 0 if v < 60 else (255 if v > 190 else v))
     capa = Image.new("RGBA", tam, CREMA)
     capa.putalpha(mascara)
-    im.alpha_composite(capa, ((im.width - tam[0]) // 2, 6 + (50 - tam[1]) // 2))
+    im.alpha_composite(capa, ((192 - tam[0]) // 2, 29 - tam[1] // 2))
     return im
 
 
 def cuadro_bolsos():
     """96x64: la foto de los bolsos pixelada, con marco de madera."""
     im, d = lienzo(3, 2)
-    d.rectangle([6, 5, 95, 61], fill=SOMBRA)
-    d.rectangle([3, 2, 92, 58], fill=MADERA_OSC)
-    d.rectangle([5, 4, 90, 56], fill=MADERA)
+    d.rectangle([6, 5, 95, 57], fill=SOMBRA)
+    d.rectangle([3, 2, 92, 55], fill=MADERA_OSC)
+    d.rectangle([5, 4, 90, 53], fill=MADERA)
     d.line([5, 4, 90, 4], fill=tono(MADERA, 1.25))
-    d.rectangle([7, 6, 88, 54], fill=tono(MADERA_OSC, 0.8))
+    d.rectangle([7, 6, 88, 51], fill=tono(MADERA_OSC, 0.8))
     foto = Image.open(os.path.join(ORIGINALES, "foto_bolsos.png")).convert("RGB")
-    ancho, alto = 80, 46
+    ancho, alto = 80, 44
     fw = foto.width
     fh = round(fw * alto / ancho)
     cy = int(foto.height * 0.5)
@@ -445,40 +540,43 @@ def generar_tilesets():
     amb = Hoja("buddy_ambiente.png", 8)
     for m in range(16):
         amb.agregar(f"tapa{m}", tapa_pared(m & 1, m & 2, m & 4, m & 8))
-    amb.agregar("salvia_alta", cara_pared(SALVIA, True, False))
-    amb.agregar("salvia_baja", cara_pared(SALVIA, False, True))
-    amb.agregar("salvia_unica", cara_pared(SALVIA, True, True))
-    amb.agregar("verde_alta", cara_pared(VERDE, True, False))
-    amb.agregar("verde_baja", cara_pared(VERDE, False, True))
-    amb.agregar("verde_unica", cara_pared(VERDE, True, True))
+    for tipo, sombra, zocalo in (("alta", True, False), ("baja", False, True), ("unica", True, True)):
+        for ji, jd in ((False, False), (True, False), (False, True)):
+            amb.agregar(f"cara_{tipo}_{int(ji)}{int(jd)}", cara_pared(sombra, zocalo, ji, jd))
     amb.agregar("madera0", piso_madera(0))
     amb.agregar("madera1", piso_madera(1))
     amb.agregar("crema", piso_crema())
     amb.agregar("deck", piso_deck())
-    amb.agregar("felpudo", felpudo())
+    for fila in ("sup", "fre"):
+        for pos in ("i", "m", "d"):
+            amb.agregar(f"esc_{fila}_{pos}", escritorio_tile(fila, pos))
+    for mira in ("arriba", "abajo", "izq", "der"):
+        amb.agregar(f"silla_{mira}", silla(mira))
+    amb.agregar("silla_respaldo", silla("arriba", solo_respaldo=True))
     amb.agregar("puerta", puerta_entrada())
+    amb.agregar("exhibidor", exhibidor())
     amb.agregar("camara", camara())
     amb.agregar("luz", luz_estudio())
+    amb.agregar("lampara", lampara())
     amb.agregar("alfombra", alfombra())
+    amb.agregar("croma", fondo_croma())
     amb.agregar("estante", estante_bolsos())
-    amb.agregar("brasero", brasero())
     amb.guardar()
 
     car = Hoja("buddy_carteles.png", 8)
     for clave, nombre in NOMBRES.items():
-        car.agregar(f"placa_{clave}", placa_nombre(nombre))
-    car.agregar("cartel_estudio", cartel(["ESTUDIO"]))
-    car.agregar("cartel_reuniones", cartel(["REUNIONES"]))
-    car.agregar("cartel_foco", cartel(["MODO FOCO"]))
-    car.agregar("cartel_atencion", cartel(["ATENCIÓN", "AL CLIENTE"], alto=2))
+        car.agregar(f"placa_{clave}", placa_escritorio(nombre))
+    car.agregar("puerta_estudio", cartel_puerta("ESTUDIO"))
+    car.agregar("puerta_reuniones", cartel_puerta("REUNIONES"))
+    car.agregar("puerta_foco", cartel_puerta("MODO FOCO"))
+    car.agregar("cartel_foco", cartel_grande([("MODO FOCO", 16), ("silencio, por favor", 10)]))
+    car.agregar("cartel_atencion", cartel_grande([("ATENCIÓN", 13), ("AL CLIENTE", 13)]))
     for i, p in enumerate(PANTALLAS):
         car.agregar(f"pantalla{i}", pantalla_link(p["texto"], "tiendabuddy" in p["url"]))
     car.guardar()
 
-    logo = logo_recepcion()
-    logo.save(os.path.join(TILESETS, "buddy_logo.png"))
-    cuadro = cuadro_bolsos()
-    cuadro.save(os.path.join(TILESETS, "buddy_cuadro.png"))
+    logo_recepcion().save(os.path.join(TILESETS, "buddy_logo.png"))
+    cuadro_bolsos().save(os.path.join(TILESETS, "buddy_cuadro.png"))
     return amb, car
 
 
@@ -536,8 +634,9 @@ def armar_mapa(amb, car):
 
     A = lambda nombre: amb.ids[nombre]
     C = lambda nombre: car.ids[nombre]
+    DEC, MISC = "WA_Decoration", "WA_Miscellaneous"
 
-    # ── Piso ──
+    # ── Piso: madera en todo el interior, crema en la recepción ──
     for y in range(H):
         for x in range(W):
             if x >= 24:
@@ -550,10 +649,9 @@ def armar_mapa(amb, car):
             for x in range(x0, x1 + 1):
                 put(capa, x, y, ts, local)
 
-    llenar("floor1", 9, 3, 15, 8, "buddy_ambiente", A("crema")[0][0])     # sala de reuniones
     llenar("floor1", 6, 20, 22, 23, "buddy_ambiente", A("crema")[0][0])   # recepción
-    llenar("floor1", 14, 24, 15, 24, "buddy_ambiente", A("crema")[0][0])
-    llenar("floor1", 24, 11, 30, 21, "buddy_ambiente", A("deck")[0][0])   # terraza
+    llenar("floor1", 13, 24, 14, 24, "buddy_ambiente", A("crema")[0][0])
+    llenar("floor1", 24, 9, 31, 19, "buddy_ambiente", A("deck")[0][0])    # terraza
 
     def alfombra_en(x0, y0, x1, y1):
         ids = A("alfombra")
@@ -563,149 +661,163 @@ def armar_mapa(amb, car):
                 k = 0 if x == x0 else (2 if x == x1 else 1)
                 put("floor2", x, y, "buddy_ambiente", ids[r][k])
 
-    alfombra_en(5, 3, 7, 5)       # set de grabación del estudio
+    alfombra_en(9, 4, 15, 8)      # sala de reuniones
     alfombra_en(17, 6, 20, 8)     # sala de foco
-    alfombra_en(25, 12, 29, 16)   # patio
+    alfombra_en(25, 11, 30, 17)   # terraza
 
     # ── Paredes ──
     tapas = set()
     tapas |= {(x, 0) for x in range(24)}
     tapas |= {(0, y) for y in range(H)}
     tapas |= {(23, y) for y in range(H) if y not in (15, 16)}          # puerta al patio
-    tapas |= {(x, 24) for x in range(24) if x not in (14, 15)}          # entrada
+    tapas |= {(x, 24) for x in range(24) if x not in (13, 14)}          # entrada
     tapas |= {(8, y) for y in range(10)} | {(16, y) for y in range(10)}
     tapas |= {(x, 9) for x in range(24) if x not in (3, 4, 11, 12, 19, 20)}
-    tapas |= {(x, 17) for x in range(0, 6)} | {(x, 17) for x in range(9, 21)}
+    tapas |= {(x, 17) for x in range(0, 6)}                             # rincón de Vero
+    tapas |= {(x, 17) for x in range(8, 23)}                            # pared del logo
 
     caras = {}
     for x in list(range(1, 8)) + list(range(9, 16)) + list(range(17, 23)):
-        caras[(x, 1)], caras[(x, 2)] = "salvia_alta", "salvia_baja"
+        caras[(x, 1)], caras[(x, 2)] = "alta", "baja"
     for x in range(1, 23):
         if x not in (3, 4, 11, 12, 19, 20):
-            caras[(x, 10)] = "salvia_unica"
+            caras[(x, 10)] = "unica"
     for x in range(1, 6):
-        caras[(x, 18)], caras[(x, 19)] = "salvia_alta", "salvia_baja"
-    for x in range(9, 21):
-        caras[(x, 18)], caras[(x, 19)] = "verde_alta", "verde_baja"
+        caras[(x, 18)], caras[(x, 19)] = "alta", "baja"
+    for x in range(8, 23):
+        caras[(x, 18)], caras[(x, 19)] = "alta", "baja"
 
     def es_tapa(x, y):
         return (x, y) in tapas or not (0 <= x < 24 and 0 <= y < H)
+
+    def es_hueco(x, y):
+        return 0 < x < 23 and (x, y) not in tapas and (x, y) not in caras
 
     for (x, y) in tapas:
         m = (es_tapa(x, y - 1) * 1) | (es_tapa(x + 1, y) * 2) | (es_tapa(x, y + 1) * 4) | (es_tapa(x - 1, y) * 8)
         put("walls1", x, y, "buddy_ambiente", A(f"tapa{m}")[0][0])
         choca(x, y)
-    for (x, y), clave in caras.items():
-        put("walls1", x, y, "buddy_ambiente", A(clave)[0][0])
+    for (x, y), tipo in caras.items():
+        ji, jd = int(es_hueco(x - 1, y)), int(es_hueco(x + 1, y))
+        put("walls1", x, y, "buddy_ambiente", A(f"cara_{tipo}_{ji}{jd}")[0][0])
         choca(x, y)
 
-    poner("walls1", 14, 24, "buddy_ambiente", A("puerta"))
-    choca(14, 24, 15, 24)
-    poner("floor2", 14, 23, "buddy_ambiente", A("felpudo"))
+    poner("walls1", 13, 24, "buddy_ambiente", A("puerta"))
+    choca(13, 24, 14, 24)
 
     # ── Muebles ──
-    def escritorio(x, y, ancho, compus=(), sillas=()):
-        """Mesa apoyada contra la pared. y = fila del borde superior de la mesa."""
-        arriba = [0] + [3] * (ancho - 2) + [1]
-        medio = [10] + [13] * (ancho - 2) + [11]
-        abajo = [20] + [23] * (ancho - 2) + [21]
-        poner("above1", x, y, "WA_Tables", [arriba])
-        poner("furniture1", x, y + 1, "WA_Tables", [medio, abajo])
-        choca(x, y + 1, x + ancho - 1, y + 2)
-        for cx in compus:
-            poner("furniture3", cx, y + 1, "WA_Miscellaneous", [[2, 3], [12, 13]])
-        for sx in sillas:
-            poner("furniture2", sx, y + 2, "WA_Seats", [[123, 124], [136, 137]])
+    def silla_en(x, y, mira):
+        put("furniture2", x, y, "buddy_ambiente", A(f"silla_{mira}")[0][0])
+        if mira == "arriba":
+            # el respaldo va por encima del avatar: parado en la silla, parece sentado
+            put("above1", x, y, "buddy_ambiente", A("silla_respaldo")[0][0])
 
-    def planta(x, y, ids, alto_choque=None):
-        poner("furniture2", x, y, "WA_Decoration", ids)
+    def escritorio(x, y, ancho, monitores=(), placas=(), sillas=(), cosas=()):
+        """Escritorio de madera clara. y = fila de la tapa; el frente queda en y+1."""
+        for i in range(ancho):
+            pos = "i" if i == 0 else ("d" if i == ancho - 1 else "m")
+            put("furniture1", x + i, y, "buddy_ambiente", A(f"esc_sup_{pos}")[0][0])
+            put("furniture1", x + i, y + 1, "buddy_ambiente", A(f"esc_fre_{pos}")[0][0])
+        choca(x, y, x + ancho - 1, y + 1)
+        for mx, local in monitores:
+            put("furniture3", mx, y, MISC, local)
+        for cx, ts, local in cosas:
+            put("furniture3", cx, y, ts, local)
+        for px, clave in placas:
+            poner("furniture3", px, y + 1, "buddy_carteles", C(f"placa_{clave}"))
+        for sx in sillas:
+            silla_en(sx, y + 2, "arriba")
+
+    def planta(x, y, ids):
+        poner("furniture2", x, y, DEC, ids)
         choca(x, y + len(ids) - 1)
 
     PLANTA_A = [[75], [87]]   # planta de hojas largas
     PLANTA_B = [[78], [90]]   # arbolito redondo
     PLANTA_C = [[79], [91]]   # planta de hojas anchas
     TELE = [[40, 41, 42], [50, 51, 52]]
+    MACETA, FLORES, TAZA, TAZA_CHICA, LAPTOP = 93, 92, 58, 59, 23
 
     ocupados = {LUGARES_PANTALLA[p["lugar"]] for p in PANTALLAS}
 
     def tele_decorativa(lugar):
         if LUGARES_PANTALLA[lugar] not in ocupados:
             x, y = LUGARES_PANTALLA[lugar]
-            poner("walls2", x, y, "WA_Miscellaneous", TELE)
+            poner("walls2", x, y, MISC, TELE)
 
-    # Estudio de contenido
-    poner("walls2", 1, 1, "buddy_carteles", C("cartel_estudio"))
+    # Estudio de contenido: escritorio de edición, fondo verde, cámara y luces
     tele_decorativa("estudio")
-    escritorio(1, 3, 3, sillas=(1,))
-    poner("furniture3", 1, 4, "WA_Miscellaneous", [[0, 1, 0]])
-    poner("furniture2", 6, 3, "WA_Seats", [[59], [72]])
-    poner("furniture2", 6, 6, "buddy_ambiente", A("camara"))
-    choca(6, 7)
-    poner("furniture2", 7, 4, "buddy_ambiente", A("luz"))
-    choca(7, 5)
+    escritorio(1, 3, 3, monitores=[(1, 0), (2, 1), (3, 0)], sillas=[2])
+    poner("furniture2", 5, 1, "buddy_ambiente", A("croma"))
+    choca(5, 3, 7, 3)
+    poner("furniture2", 6, 4, "WA_Seats", [[59], [72]])
+    poner("furniture2", 6, 7, "buddy_ambiente", A("camara"))
+    choca(6, 8)
+    poner("furniture2", 4, 4, "buddy_ambiente", A("luz"))
+    choca(4, 5)
+    poner("furniture2", 7, 5, "buddy_ambiente", A("luz"))
+    choca(7, 6)
     planta(1, 7, PLANTA_A)
 
-    # Sala de reuniones
+    # Sala de reuniones: mesa larga centrada, 6 sillas y alfombra
     tele_decorativa("reuniones")
-    poner("walls2", 13, 1, "buddy_carteles", C("cartel_reuniones"))
-    poner("furniture2", 11, 4, "WA_Seats", [[121, 122, 121, 122], [134, 135, 134, 135]])
-    escritorio(11, 5, 4)
-    poner("furniture2", 11, 7, "WA_Seats", [[123, 124, 123, 124], [136, 137, 136, 137]])
-    put("furniture2", 10, 6, "WA_Seats", 119)
-    put("furniture2", 15, 6, "WA_Seats", 120)
-    put("furniture3", 12, 6, "WA_Miscellaneous", 58)
-    put("furniture3", 14, 6, "WA_Miscellaneous", 23)
+    put("walls2", 14, 1, MISC, 78)  # reloj
+    escritorio(10, 5, 5, cosas=[(10, MISC, TAZA), (12, MISC, LAPTOP), (14, MISC, TAZA_CHICA)])
+    for sx in (11, 13):
+        silla_en(sx, 4, "abajo")
+        silla_en(sx, 7, "arriba")
+    silla_en(9, 5, "der")
+    silla_en(15, 5, "izq")
     planta(9, 3, PLANTA_C)
     planta(15, 3, PLANTA_C)
 
-    # Sala de foco
+    # Sala de foco: cartel grande, lámpara, sillón y plantas
     poner("walls2", 18, 1, "buddy_carteles", C("cartel_foco"))
-    escritorio(17, 3, 2, compus=(17,), sillas=(17,))
-    escritorio(21, 3, 2, compus=(21,), sillas=(21,))
+    escritorio(17, 3, 2, monitores=[(17, 1)], sillas=[17], cosas=[(18, DEC, MACETA)])
+    escritorio(21, 3, 2, monitores=[(21, 1)], sillas=[21], cosas=[(22, MISC, TAZA)])
     poner("furniture2", 21, 6, "WA_Other_Furniture", [[22, 23], [34, 35], [46, 47]])
     choca(21, 7, 22, 8)
     poner("furniture2", 19, 6, "WA_Seats", [[85], [98]])
+    poner("furniture2", 20, 6, "buddy_ambiente", A("lampara"))
+    choca(20, 7)
     planta(17, 7, PLANTA_B)
 
-    # Espacio abierto: escritorios con el nombre de cada uno en la pared
-    poner("walls2", 1, 10, "buddy_carteles", C("placa_lucho"))
-    poner("walls2", 5, 10, "buddy_carteles", C("placa_ivan"))
-    poner("walls2", 7, 10, "buddy_carteles", C("placa_mateo"))
-    poner("walls2", 13, 10, "buddy_carteles", C("placa_pablo"))
-    poner("walls2", 15, 10, "buddy_carteles", C("placa_sofi"))
-    escritorio(1, 11, 2, compus=(1,), sillas=(1,))                 # Lucho, al lado del estudio
-    escritorio(5, 11, 4, compus=(5, 7), sillas=(5, 7))             # Ivan y Mateo
-    escritorio(13, 11, 4, compus=(13, 15), sillas=(13, 15))        # Pablo y Sofi
-    poner("walls2", 9, 10, "WA_Decoration", [[0, 1]])              # cuadro paisaje
-    put("walls2", 17, 10, "WA_Miscellaneous", 78)                  # reloj
-    poner("walls2", 21, 10, "WA_Decoration", [[24, 25]])           # mapa del mundo
+    # Espacio abierto: carteles de sala al lado de cada puerta
+    poner("walls2", 1, 10, "buddy_carteles", C("puerta_estudio"))
+    poner("walls2", 9, 10, "buddy_carteles", C("puerta_reuniones"))
+    poner("walls2", 17, 10, "buddy_carteles", C("puerta_foco"))
+    poner("walls2", 21, 10, DEC, [[24, 25]])  # mapa del mundo
+
+    # Escritorios con placa al frente y silla frente a la computadora
+    escritorio(1, 11, 2, monitores=[(1, 1)], placas=[(1, "lucho")], sillas=[1],
+               cosas=[(2, DEC, MACETA)])                                           # Lucho, al lado del estudio
+    escritorio(5, 11, 4, monitores=[(5, 0), (7, 1)], placas=[(5, "ivan"), (7, "mateo")], sillas=[5, 7],
+               cosas=[(6, MISC, TAZA), (8, DEC, FLORES)])                          # Ivan y Mateo
+    escritorio(13, 11, 4, monitores=[(13, 1), (15, 0)], placas=[(13, "pablo"), (15, "sofi")], sillas=[13, 15],
+               cosas=[(14, DEC, MACETA), (16, MISC, TAZA)])                        # Pablo y Sofi
     planta(10, 11, PLANTA_A)
     planta(21, 11, PLANTA_B)
-    poner("furniture2", 22, 11, "WA_Miscellaneous", [[46], [56]])  # cafetera
+    poner("furniture2", 22, 11, MISC, [[46], [56]])  # cafetera
     choca(22, 12)
-    poner("furniture2", 1, 14, "WA_Decoration", [[64], [76], [88]])
-    choca(1, 16)
 
-    # Rincón de atención al cliente + escritorio de Vero
-    poner("walls2", 1, 19, "buddy_carteles", C("placa_vero"))
-    put("walls2", 2, 18, "WA_Decoration", 2)
+    # Rincón de atención al cliente + escritorio de Vero (pegado a la recepción)
+    poner("walls2", 1, 18, DEC, [[0, 1]])
     poner("walls2", 3, 18, "buddy_carteles", C("cartel_atencion"))
-    escritorio(1, 20, 2, compus=(1,), sillas=(1,))
-    escritorio(3, 20, 3, sillas=(3,))
-    put("furniture3", 4, 21, "WA_Miscellaneous", 0)
-    put("furniture3", 5, 21, "WA_Miscellaneous", 59)
+    escritorio(1, 20, 2, monitores=[(1, 1)], placas=[(1, "vero")], sillas=[1], cosas=[(2, MISC, TAZA_CHICA)])
+    escritorio(3, 20, 3, monitores=[(4, 0)], sillas=[4], cosas=[(5, MISC, LAPTOP)])
 
-    # Recepción
-    poner("walls2", 12, 18, "buddy_logo", [[0, 1, 2, 3, 4, 5], [6, 7, 8, 9, 10, 11]])
-    poner("walls2", 18, 18, "buddy_cuadro", [[0, 1, 2], [3, 4, 5]])
-    poner("above1", 6, 21, "WA_Decoration", [[60, 61, 62]])
-    poner("furniture2", 6, 22, "WA_Decoration", [[72, 73, 74], [84, 85, 86]])
-    choca(7, 23)
-    poner("furniture2", 19, 22, "buddy_ambiente", A("estante"))
-    choca(19, 22, 21, 23)
-    put("furniture2", 13, 23, "WA_Decoration", 93)
-    put("furniture2", 16, 23, "WA_Decoration", 93)
-    for x in (14, 15):
+    # Recepción: estante con bolsos | logo | pantalla de la tienda | cuadro
+    poner("walls2", 8, 18, "buddy_ambiente", A("estante"))
+    poner("walls2", 11, 18, "buddy_logo", [[0, 1, 2, 3, 4, 5], [6, 7, 8, 9, 10, 11]])
+    poner("walls2", 20, 18, "buddy_cuadro", [[0, 1, 2], [3, 4, 5]])
+    poner("furniture2", 8, 21, "buddy_ambiente", A("exhibidor"))
+    choca(8, 21, 9, 21)
+    planta(11, 22, PLANTA_A)
+    planta(16, 22, PLANTA_A)
+    poner("above1", 20, 21, DEC, [[60, 61, 62]])
+    poner("furniture2", 20, 22, DEC, [[72, 73, 74], [84, 85, 86]])
+    choca(21, 23)
+    for x in (13, 14):
         put("start", x, 22, "WA_Special_Zones", 1)
 
     # Pantallas con link
@@ -713,36 +825,36 @@ def armar_mapa(amb, car):
         x, y = LUGARES_PANTALLA[p["lugar"]]
         poner("walls2", x, y, "buddy_carteles", C(f"pantalla{i}"))
 
-    # Patio / terraza
-    poner("furniture2", 26, 12, "WA_Seats", [[0, 1, 2], [13, 14, 15]])
-    poner("furniture1", 27, 14, "WA_Tables", [[177, 178], [187, 188]])
-    choca(27, 15, 28, 15)
-    put("furniture3", 27, 15, "WA_Miscellaneous", 58)
-    put("furniture2", 25, 15, "WA_Seats", 166)
-    put("furniture2", 29, 15, "WA_Seats", 164)
-    poner("furniture2", 27, 18, "buddy_ambiente", A("brasero"))
-    choca(27, 18, 28, 19)
-    poner("furniture2", 25, 18, "WA_Seats", [[146], [159]])
-    poner("furniture2", 30, 18, "WA_Seats", [[147], [160]])
-    planta(24, 11, PLANTA_A)
-    planta(30, 11, PLANTA_C)
-    planta(24, 20, PLANTA_B)
-    planta(30, 20, PLANTA_C)
+    # Terraza: deck, alfombra, dos mesitas con sillas y plantas en las esquinas
+    for tx, ty, taza in ((26, 12, TAZA), (29, 15, TAZA_CHICA)):
+        put("furniture1", tx, ty, "WA_Tables", 143)
+        put("furniture3", tx, ty, MISC, taza)
+        choca(tx, ty)
+        silla_en(tx - 1, ty, "der")
+        silla_en(tx + 1, ty, "izq")
+    planta(24, 9, PLANTA_A)
+    planta(31, 9, PLANTA_C)
+    planta(24, 18, PLANTA_B)
+    planta(31, 18, PLANTA_C)
+    put("furniture2", 27, 9, DEC, FLORES)
+    put("furniture2", 28, 9, DEC, MACETA)
 
+    # Árboles agrupados en los bordes (arriba y abajo), centro libre
     def arbol(x, y, col):
         base = [[col, col + 1, col + 2], [col + 25, col + 26, col + 27], [col + 50, col + 51, col + 52]]
         poner("above2", x, y, "WA_Exterior", base[:2])
         poner("furniture3", x, y + 2, "WA_Exterior", [base[2]])
         choca(x + 1, y + 2)
 
-    arbol(24, 1, 0)
-    arbol(28, 3, 9)
-    arbol(25, 6, 3)
+    arbol(24, 0, 0)
+    arbol(28, 1, 9)
+    arbol(24, 21, 3)
     arbol(28, 22, 12)
-    poner("furniture1", 29, 8, "WA_Exterior", [[533, 534], [558, 559]])
-    poner("furniture1", 30, 0, "WA_Exterior", [[531, 532], [556, 557]])
-    poner("furniture1", 24, 23, "WA_Exterior", [[450, 451]])
-    for (x, y) in ((31, 3), (27, 9), (31, 14), (26, 23), (31, 19), (24, 5)):
+    poner("furniture1", 24, 5, "WA_Exterior", [[533, 534], [558, 559]])
+    poner("furniture1", 30, 5, "WA_Exterior", [[531, 532], [556, 557]])
+    poner("furniture1", 30, 20, "WA_Exterior", [[450, 451]])
+    poner("furniture1", 27, 5, "WA_Exterior", [[454, 455]])
+    for (x, y) in ((31, 1), (27, 3), (26, 7), (29, 7), (27, 21), (31, 23)):
         put("furniture1", x, y, "WA_Exterior", 506)
 
     # ── Colisiones ──
@@ -875,7 +987,7 @@ def main():
         for o in objetos:
             col = colores.get(o["name"], (255, 150, 0, 255))
             d.rectangle([o["x"], o["y"], o["x"] + o["width"] - 1, o["y"] + o["height"] - 1], outline=col, width=3)
-        for x in (14, 15):
+        for x in (13, 14):
             d.rectangle([x * T + 8, 22 * T + 8, x * T + 23, 22 * T + 23], fill=(0, 255, 0, 200))
         dbg.alpha_composite(capa)
         dbg.save(ruta)

@@ -101,6 +101,10 @@ Todo lo propio de la oficina se arma con un solo archivo: `herramientas/construi
 
 Para usarla, parate adelante de la pantalla y apretá **ESPACIO**.
 
+### Cambiar los colores
+
+Los colores de la marca están en `construir.py`, en unas líneas que empiezan con `VERDE = `, `SALVIA = `, `MADERA = `, etc. (buscá "Paleta de la marca"). Por ejemplo, para aclarar el piso cambiá `MADERA = c("#7F6D5F")` por otro código de color, guardá y corré el script. Los escritorios usan esa misma madera, un toque más clara, así que acompañan el cambio solos.
+
 ### Lo que conviene no hacer
 
 - No edites `oficina.tmj` a mano ni con Tiled si vas a seguir usando el script: cada vez que lo corras, lo pisa con lo que dice `construir.py`.
@@ -108,7 +112,19 @@ Para usarla, parate adelante de la pantalla y apretá **ESPACIO**.
 
 ---
 
-## 5. Publicar un cambio
+## 5. "Sentarte" en tu puesto
+
+WorkAdventure **no tiene una función para sentarse**: los personajes solo caminan o se quedan quietos (lo chequeamos en la documentación y en el código). Por eso la oficina usa un truco:
+
+- Las sillas se pueden pisar; los escritorios, no.
+- Caminá hasta tu silla desde abajo, así quedás mirando la computadora.
+- El respaldo de la silla se dibuja por encima de tu personaje y te tapa las piernas, así que parece que estás sentado.
+
+Funciona igual en las sillas de la sala de reuniones que miran a la mesa y en las de la terraza.
+
+---
+
+## 6. Publicar un cambio
 
 ```bash
 git add -A && git commit -m "Cambio en la oficina" && git push
