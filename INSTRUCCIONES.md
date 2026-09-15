@@ -23,9 +23,9 @@ cd ~/Desktop/"OFI VIRTUAL"
 | **Founders** | Pablo y Sofi, con una mesita para charlar. |
 | **Experiencia del cliente** | Vero y el mostrador de atención. |
 | **Ardiflet** (arriba a la derecha) | Ivan y Camilo, con la estética de ardiflet.com. |
-| **Cowork** (izquierda) | 8 puestos compartidos; uno es el de Mateo. |
-| **Patio interno** (centro) | Pasto, fuente, dos árboles y dos mesitas. Se entra por arriba y por los costados. |
-| **Café** (derecha) | Barra con banquetas, cafetera, biblioteca y dos mesitas. |
+| **Cowork** (izquierda) | 8 puestos compartidos en una fila de 4 mesas; el primero es el de Mateo. |
+| **Patio interno** (centro) | Pasto, fuente, arbolitos y un banco. Se entra por arriba y por los costados. |
+| **Café** (derecha) | Barra con banquetas, cafetera y una mesita. |
 | **Modo foco** (abajo a la izquierda) | Sala de silencio: adentro nadie te arranca una charla. |
 | **Recepción / showroom** (abajo) | Donde aparecés. Logo, estante con bolsos, pantalla de la tienda y cuadro. |
 | **Sala de estar** (abajo a la derecha) | Sillón y mesita, pegada a la recepción. |
