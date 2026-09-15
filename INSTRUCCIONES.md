@@ -24,10 +24,14 @@ cd ~/Desktop/"OFI VIRTUAL"
 | **Experiencia del cliente** | Vero y el mostrador de atención. |
 | **Ardiflet** (arriba a la derecha) | Ivan y Camilo, con la estética de ardiflet.com. |
 | **Cowork** (izquierda) | 8 puestos compartidos; uno es el de Mateo. |
-| **Patio interno** (centro) | Pasto, deck, fuente y mesitas. Se entra por los cuatro lados. |
-| **Café** (derecha) | Barra, cafetera y living. |
+| **Patio interno** (centro) | Pasto, fuente, dos árboles y dos mesitas. Se entra por arriba y por los costados. |
+| **Café** (derecha) | Barra con banquetas, cafetera, biblioteca y dos mesitas. |
 | **Modo foco** (abajo a la izquierda) | Sala de silencio: adentro nadie te arranca una charla. |
-| **Recepción** (abajo) | Donde aparecés. Logo, estante con bolsos, pantalla de la tienda y cuadro. |
+| **Recepción / showroom** (abajo) | Donde aparecés. Logo, estante con bolsos, pantalla de la tienda y cuadro. |
+| **Sala de estar** (abajo a la derecha) | Sillón y mesita, pegada a la recepción. |
+| **Jardín** (arriba de todo) | Decorativo, no se camina. Está ahí para que la barra de botones de WorkAdventure quede encima del jardín y no tape las oficinas. |
+
+> **Sobre el zoom:** si alejás la cámara al máximo, el mapa queda chico en una esquina con fondo oscuro. Es cómo calcula WorkAdventure el tope del zoom en pantallas grandes (pasa con cualquier mapa); no se puede cambiar desde el mapa. Con un zoom normal no se nota.
 
 ---
 
