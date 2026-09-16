@@ -998,8 +998,6 @@ def armar_mapa(amb, car):
                cosas=[(35, MISC, TAZA)], color_silla="ard")
     escritorio(39, 3, 2, monitores=[(39, 0)], placas=[(39, "placa_camilo")], sillas=[39],
                cosas=[(40, DEC, MACETA)], color_silla="ard")
-    poner("furniture2", 35, 5, MISC, [[33, 34, 35], [43, 44, 45], [53, 54, 55]])  # pizarra de envíos
-    choca(35, 7, 37, 7)
     poner("furniture2", 38, 6, "buddy_ambiente", A("cajas"))
     choca(38, 7, 39, 7)
     poner("furniture2", 40, 7, "buddy_ambiente", A("caja_chica"))
@@ -1198,9 +1196,38 @@ def renderizar(mapa):
     return out
 
 
+# Un lugar de cada zona, en coordenadas del edificio, para revisar que se pueda llegar caminando.
+LUGARES_A_REVISAR = {
+    "Content room": (2, 5), "Sala de Embarque": (14, 7), "Founders": (22, 5),
+    "Experiencia del cliente": (29, 5), "Ardiflet": (36, 5), "pasillo": (20, 10),
+    "cowork": (3, 14), "patio interno": (25, 12), "café": (34, 14),
+    "Modo foco": (3, 20), "recepción": (17, 19), "sala de estar": (35, 20),
+}
+
+
+def verificar_accesos(choques):
+    """Camina el mapa desde la entrada y avisa si alguna zona quedó tapada por un mueble."""
+    ex, ey = ENTRADA
+    inicio = (ex, ey + JARDIN)
+    vistos, cola = {inicio}, [inicio]
+    while cola:
+        x, y = cola.pop()
+        for nx, ny in ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)):
+            if 0 <= nx < W and 0 <= ny < H and (nx, ny) not in vistos and (nx, ny) not in choques:
+                vistos.add((nx, ny))
+                cola.append((nx, ny))
+    problemas = [n for n, (x, y) in LUGARES_A_REVISAR.items() if (x, y + JARDIN) not in vistos]
+    if problemas:
+        print("⚠️  No se puede llegar caminando a: " + ", ".join(problemas))
+    else:
+        print("Accesos OK: se llega caminando a todas las zonas.")
+    return problemas
+
+
 def main():
     amb, car = generar_tilesets()
     mapa, choques, objetos = armar_mapa(amb, car)
+    verificar_accesos(choques)
     plano = renderizar(mapa)
 
     miniatura = Image.new("RGBA", (512, 512), VERDE)
