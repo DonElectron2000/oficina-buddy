@@ -18,7 +18,7 @@ cd ~/Desktop/"OFI VIRTUAL"
 
 | Zona | Qué es |
 |---|---|
-| **Content room** (arriba a la izquierda) | Estudio de edición: 3 puestos, fondo verde, cámara y luces. |
+| **Content room** (arriba a la izquierda) | Estudio de edición: Lihuel y Julian en las puntas, 2 puestos libres en el medio, y abajo el fondo verde con la cámara y la luz. |
 | **Sala de Embarque** | Sala de reuniones. Al entrar se abre la videollamada con todos los que estén adentro. |
 | **Founders** | Pablo y Sofi, con una mesita para charlar. |
 | **Experiencia del cliente** | Vero y el mostrador de atención. |
@@ -89,7 +89,7 @@ Hay tres listas:
 
 - **`NOMBRES`**: los escritorios fijos (Pablo, Sofi, Vero, Ivan, Camilo). Cambiá solo lo que está a la derecha de los dos puntos y dejá las comillas: `"camilo": "Camilo",`.
 - **`COWORK`**: los 8 puestos compartidos, en orden (fila de arriba de izquierda a derecha, después la de abajo). `""` es un puesto libre sin placa. Para sumar a alguien, reemplazá un `""` por su nombre: `COWORK = ["Mateo", "Juan", "", "", "", "", "", ""]`.
-- **`CONTENT_ROOM`**: los 3 puestos de edición, igual que el cowork. Hoy están los tres sin placa.
+- **`CONTENT_ROOM`**: los 2 puestos de edición del medio (los de las puntas son los de Lihuel y Julian, que están en `NOMBRES`). Hoy los dos están sin placa.
 
 ### Agregar una pantalla que abra un link (por ejemplo, un tablero de Notion)
 

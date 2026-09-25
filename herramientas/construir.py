@@ -36,14 +36,16 @@ NOMBRES = {
     "vero": "Vero",      # sala de Experiencia del cliente
     "ivan": "Ivan",      # oficina Ardiflet
     "camilo": "Camilo",  # oficina Ardiflet
+    "lihuel": "Lihuel",  # Content room (punta izquierda)
+    "julian": "Julian",  # Content room (punta derecha)
 }
 
 # Cowork: 8 puestos compartidos. "" = puesto libre, sin placa.
 # Orden: fila de arriba de izquierda a derecha, después la fila de abajo.
 COWORK = ["Mateo", "", "", "", "", "", "", ""]
 
-# Content room: 3 puestos de edición. "" = sin placa.
-CONTENT_ROOM = ["", "", ""]
+# Content room: 2 puestos de edición en el medio, entre Lihuel y Julian. "" = sin placa.
+CONTENT_ROOM = ["", ""]
 
 # Pantallas de pared que abren un link cuando te parás adelante y apretás ESPACIO.
 #   lugar: "recepcion", "reuniones" (Sala de Embarque) o "content" (Content room)
@@ -417,19 +419,19 @@ def lampara():
 
 
 def fondo_croma():
-    """Fondo verde de grabación con su estructura, 3x3 tiles."""
-    im, d = lienzo(3, 3)
+    """Fondo verde de grabación con su estructura, 3x2 tiles."""
+    im, d = lienzo(3, 2)
     croma = c("#2FA84F")
     fierro = c("#2B2B2B")
-    d.rectangle([6, 88, 90, 93], fill=SOMBRA)
+    d.rectangle([6, 56, 90, 61], fill=SOMBRA)
     for x in (4, 91):
-        d.line([x, 2, x, 90], fill=fierro, width=3)
-        d.line([x - 5, 91, x + 5, 91], fill=fierro, width=2)
+        d.line([x, 2, x, 58], fill=fierro, width=3)
+        d.line([x - 5, 59, x + 5, 59], fill=fierro, width=2)
     d.line([4, 3, 91, 3], fill=fierro, width=3)
-    d.rectangle([8, 5, 87, 76], fill=croma)
+    d.rectangle([8, 5, 87, 47], fill=croma)
     for x in range(14, 87, 12):
-        d.line([x, 5, x, 76], fill=tono(croma, 0.9))
-    d.polygon([(8, 76), (87, 76), (90, 88), (5, 88)], fill=tono(croma, 1.08))
+        d.line([x, 5, x, 47], fill=tono(croma, 0.9))
+    d.polygon([(8, 47), (87, 47), (90, 57), (5, 57)], fill=tono(croma, 1.08))
     return im
 
 
@@ -947,21 +949,21 @@ def armar_mapa(amb, car):
 
     # ═══ Fila de arriba ═══
 
-    # Content room (x1-9): 3 puestos de edición, fondo verde, cámara y luces
+    # Content room (x1-9): Lihuel y Julian en las puntas, 2 puestos de edición en el medio,
+    # y abajo el set de grabación (fondo verde, cámara y luz)
     poner("walls2", 1, 1, "buddy_carteles", C("cartel_content"))
     tele_decorativa("content")
-    escritorio(1, 3, 6, monitores=[(1, 0), (3, 1), (5, 0)],
-               placas=[(1 + 2 * i, f"placa_content{i}") for i in range(3)], sillas=[1, 3, 5],
-               cosas=[(2, MISC, TAZA), (4, DEC, MACETA), (6, MISC, TAZA_CHICA)])
-    poner("furniture2", 7, 1, "buddy_ambiente", A("croma"))
-    choca(7, 3, 9, 3)
-    poner("furniture2", 8, 4, SEATS, [[59], [72]])
-    poner("furniture2", 8, 6, "buddy_ambiente", A("camara"))
-    choca(8, 7)
-    poner("furniture2", 7, 4, "buddy_ambiente", A("luz"))
-    choca(7, 5)
-    poner("furniture2", 9, 4, "buddy_ambiente", A("luz"))
-    choca(9, 5)
+    escritorio(1, 3, 9,
+               monitores=[(1, 1), (3, 0), (5, 1), (8, 0)],
+               placas=[(1, "placa_lihuel"), (3, "placa_content0"), (5, "placa_content1"), (8, "placa_julian")],
+               sillas=[1, 3, 5, 8],
+               cosas=[(2, MISC, TAZA), (4, DEC, MACETA), (7, DEC, FLORES), (9, MISC, TAZA_CHICA)])
+    poner("furniture2", 6, 6, "buddy_ambiente", A("croma"))
+    choca(6, 7, 8, 7)
+    poner("furniture2", 9, 6, "buddy_ambiente", A("camara"))
+    choca(9, 7)
+    poner("furniture2", 2, 6, "buddy_ambiente", A("luz"))
+    choca(2, 7)
     planta(1, 6, PLANTA_A)
 
     # Sala de Embarque (x11-18): mesa larga, 6 sillas y alfombra
